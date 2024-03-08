@@ -3,6 +3,8 @@ package com.example.musicapp;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
+import android.app.ProgressDialog;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
@@ -11,6 +13,7 @@ import android.widget.SeekBar;
 
 import com.example.musicapp.databinding.ActivityMainBinding;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 
 public class MainActivity extends AppCompatActivity {
@@ -23,11 +26,26 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         // Initialize the MediaPlayer
-        mediaPlayer = MediaPlayer.create(this, R.raw.beat);
+        // c1
+        // mediaPlayer = MediaPlayer.create(this, R.raw.beat);
+        // c2
 
-       onPlayMusic();
+        mediaPlayer = new MediaPlayer();
+        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        try {
+            String URL = "https://storage.googleapis.com/ikara-storage/tmp/beat.mp3";
+            mediaPlayer.setDataSource(URL);
+            mediaPlayer.prepareAsync();
+            mediaPlayer.setOnPreparedListener(mediaPlayer -> {
+                onPlayMusic();
+            });
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+//       onPlayMusic();
        onPauseMusic();
-       setTimeTotalSong();
+//       setTimeTotalSong();
        setOnSeekBar();
 
     }
@@ -38,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
             binding.stop.setVisibility(View.VISIBLE);
             mediaPlayer.start();
             upTimeSong();
+            setTimeTotalSong();
         });
     }
 
@@ -84,6 +103,10 @@ public class MainActivity extends AppCompatActivity {
                 SimpleDateFormat dateFormat = new SimpleDateFormat("mm:ss");
                 binding.tvTimeCurrent.setText(dateFormat.format(mediaPlayer.getCurrentPosition()));
                 binding.seekBar.setProgress(mediaPlayer.getCurrentPosition());
+                mediaPlayer.setOnCompletionListener(mp -> {
+                    binding.stop.setVisibility(View.GONE);
+                    binding.play.setVisibility(View.VISIBLE);
+                });
                 handler.postDelayed(this, 500);
             }
         }, 100);
